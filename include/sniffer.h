@@ -14,7 +14,7 @@
  * Estructura para el encabezado ETHERNET II
  * net/ethernet.h
  **/
-struct ether_header             /* 10Mb/s ethernet header */
+struct ethernet_v2              /* 10Mb/s ethernet header */
 {
   u_int8_t  ether_dhost[ETH_ALEN]; /* destination eth addr */
   u_int8_t  ether_shost[ETH_ALEN]; /* source ether addr    */

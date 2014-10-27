@@ -12,32 +12,31 @@ void print_packet (u_char* arg,
   unsigned short ether_type;    /* Ethertype */
 
   /* {{{ -- ETHERNET II -- */
-  /* MAC destino:   6 bytes         */
-  /* MAC origen:    6 bytes         */
   /* Tipo:          2 bytes         */
   /* Payload:       46 - 1500 bytes */
   /* CRC:           4 bytes         */
   printf ("---\n");
   /* }}} */
 
-  /* Obtiene las direcciones MAC */
-  /* {{{ Salta a los campos de las direcciones MAC */
-  int i;
+  struct ethernet_v2* ether_header;
+  ether_header = (struct ethernet_v2*) packet;
 
-  /* MAC ORIGEN */
-  printf ("MAC origen: ");
-  ptr = packet + 6;
-  for (i = 0; i < ETHER_ADDR_LEN-1; i++, ptr++)
-    printf ("%02x:", *ptr);
-  printf ("%02x\n", *ptr);
-
-  /* MAC DESTINO */
-  ptr = packet;
-  printf ("MAC destino: ");
-  for (i = 0; i < ETHER_ADDR_LEN-1; i++, ptr++)
-    printf ("%02x:", *ptr);
-  printf ("%02x\n", *ptr);
-  /* }}} */
+  /* MAC origen (6 bytes) */
+  printf ("MAC origen: %02x:%02x:%02x:%02x:%02x:%02x\n",
+          ether_header->ether_shost[0],
+          ether_header->ether_shost[1],
+          ether_header->ether_shost[2],
+          ether_header->ether_shost[3],
+          ether_header->ether_shost[4],
+          ether_header->ether_shost[5]);
+  /* MAC destino (6 bytes) */
+  printf ("MAC destino: %02x:%02x:%02x:%02x:%02x:%02x\n",
+          ether_header->ether_dhost[0],
+          ether_header->ether_dhost[1],
+          ether_header->ether_dhost[2],
+          ether_header->ether_dhost[3],
+          ether_header->ether_dhost[4],
+          ether_header->ether_dhost[5]);
 
   /* Imprime el campo tipo */
   /* {{{ Salta al campo Tipo (Ethertype) */
