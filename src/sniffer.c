@@ -12,7 +12,7 @@ void print_packet (u_char* arg,
   unsigned short ether_type;    /* Ethertype */
 
   /* {{{ -- ETHERNET II -- */
-  /* Tipo:          2 bytes         */
+
   /* Payload:       46 - 1500 bytes */
   /* CRC:           4 bytes         */
   printf ("---\n");
@@ -38,12 +38,9 @@ void print_packet (u_char* arg,
           ether_header->ether_dhost[4],
           ether_header->ether_dhost[5]);
 
-  /* Imprime el campo tipo */
-  /* {{{ Salta al campo Tipo (Ethertype) */
-  ptr = packet + 12;
-  ether_type = (*ptr << 8) + *(ptr+1);
+  /* Ethertype (2 bytes) */
+  ether_type = ntohs (ether_header->ether_type);
   printf ("Tipo: %04x\n", ether_type);
-  /* }}} */
 
   /* Payload */
   /* {{{ Salta al campo de datos (Payload) */

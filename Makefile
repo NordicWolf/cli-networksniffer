@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-c -Wall
 LIBFLAGS=-lpcap
 OBJS=sniffer.o main.o
-ARGS=-i wlan0 -c 3 tcp
+ARGS=-i wlan0 -c 3 ip
 
 all: build exec
 
