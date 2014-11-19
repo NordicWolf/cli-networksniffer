@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   /* }}} */
   /* Inicia la captura de paquetes */
   /* {{{ */
-  pcap_loop (session, counter, print_packet, NULL);
+  pcap_loop (session, counter, packet_parser, NULL);
   /* }}} */
 
   return EXIT_SUCCESS;
