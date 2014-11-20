@@ -1,5 +1,9 @@
-/* Aldo Rodríguez Coreño */
-/* Analizador de Protocolo Ethernet II */
+/**********************************************
+* Autor: Aldo Rodríguez Coreño
+* Analizador de Protocolos sobre Ethernet II
+*
+* Extracción de datos de los paquetes de red
+***********************************************/
 
 #include "../include/sniffer.h"
 

@@ -1,5 +1,9 @@
-/* Aldo Rodríguez Coreño */
-/* Analizador de Protocolo Ethernet II */
+/**********************************************
+* Autor: Aldo Rodríguez Coreño
+* Analizador de Protocolos sobre Ethernet II
+*
+* Esquema básico para la captura de paquetes
+***********************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,16 +12,16 @@
 
 int main(int argc, char *argv[])
 {
-  int counter;                  /* Establece el límite de paquetes a capturar */
-  char* device;
-  char errbuf [PCAP_ERRBUF_SIZE];
-  pcap_t* session;
-  bpf_u_int32 net_mask;         /* Máscara de red */
-  bpf_u_int32 net_ip;           /* Dirección IP */
-  struct bpf_program filter;    /* Berkeley Packet Filter struct */
+  int counter;                    /* Establece el límite de paquetes a capturar */
+  char errbuf [PCAP_ERRBUF_SIZE]; /* Búfer de mensaje de error */
+  char* device;                   /* Nombre del dispositivo de red */
+  char* filter;                   /* Apuntador a una cadena de filtro */
+  pcap_t* session;                /* Apuntador a una sesión de captura */
+  bpf_u_int32 net_mask;           /* Máscara de red */
+  bpf_u_int32 net_ip;             /* Dirección de red */
+  struct bpf_program bpf;         /* Berkeley Packet Filter */
 
   /* Obtiene Las opciones de la línea de comandos */
-  /* {{{ */
   int opciones;
   while ((opciones = getopt (argc, argv, "i:c:")) != -1)
     {
@@ -33,40 +37,37 @@ int main(int argc, char *argv[])
           break;
         }
     }
-  /* }}} */
-  /* Obtiene los parámetros de la red (net_mask, net_ip)*/
-  /* {{{ */
-  pcap_lookupnet (device, &net_ip, &net_mask, errbuf);
-  printf ("Se inicia la captura desde el dispositivo %s con filtro %s\n", device, argv[5]);
-  /* }}} */
-  /* Inicia una sesión para la captura de paquetes */
-  /* {{{ */
-  session = pcap_open_live (device, BUFSIZ, 0, 1000, errbuf);
-  if(session == NULL)
+  /* Obtiene los atributos de la red (máscara de red, direccion de red)*/
+  if (pcap_lookupnet (device, &net_ip, &net_mask, errbuf) < 0)
     {
-      fprintf (stderr, "Error al iniciar la captura [%s]\n", errbuf);
+      fprintf (stderr, "%s\n", errbuf);
       exit (EXIT_FAILURE);
     }
-  /* }}} */
-  /* Prepara el filtro BPF pasado como argumento */
-  /* {{{ */
-  /* Se compila el BPF */
-  if(pcap_compile(session, &filter, argv[5], 0, net_ip) == -1)
+
+  /* Inicia una sesión para la captura de paquetes */
+  session = pcap_open_live (device, BUFSIZ, 1, 100, errbuf);
+  if(session == NULL)
     {
-      fprintf (stderr, "Error al compilar el BPF\n");
+      fprintf (stderr, "%s\n", errbuf);
+      exit (EXIT_FAILURE);
+    }
+
+  /* Se compila el BPF */
+  filter = argv[5];
+  if(pcap_compile(session, &bpf, filter, 0, net_ip) < 0)
+    {
+      fprintf (stderr, "Error al compilar el filtro\n");
       exit (EXIT_FAILURE);
     }
   /* Se aplica el BPF */
-  if(pcap_setfilter(session, &filter) == -1)
+  if(pcap_setfilter(session, &bpf) < 0)
     {
-      fprintf (stderr, "Error al aplicar el BPF\n");
+      fprintf (stderr, "Error al aplicar el filtro\n");
       exit(EXIT_FAILURE);
     }
-  /* }}} */
+
   /* Inicia la captura de paquetes */
-  /* {{{ */
   pcap_loop (session, counter, packet_parser, NULL);
-  /* }}} */
 
   return EXIT_SUCCESS;
 }
