@@ -3,7 +3,6 @@
 /* Ethernet protocol ID's */
 #define	ETHERTYPE_IP   0x0800   /* IP */
 #define	ETHERTYPE_ARP  0x0806   /* Address resolution */
-
 #define	ETHER_ADDR_LEN ETH_ALEN /* size of ethernet addr */
 #define	ETHER_HDR_LEN  ETH_HLEN /* total octets in header */
 

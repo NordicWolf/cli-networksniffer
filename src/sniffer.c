@@ -12,13 +12,13 @@ void packet_parser (u_char* arg,
                    const struct pcap_pkthdr* pkthdr,
                    const u_char* packet)
 {
-  const u_char* ptr;            /* Apuntador a los campos de las cabeceras */
+  const u_char* ptr;            /* Apuntador a datos dentro del paquete */
   unsigned short ether_type;    /* Ethertype */
-  struct pkt_data data;
+  struct tcp_ip data;
 
   /* -- ETHERNET II -- */
-  data.network_access = (struct ethernet*) packet;
-  ether_type = ntohs (data.network_access->ether_type);
+  data.datalink = (struct ethernet*) packet;
+  ether_type = ntohs (data.datalink->ether_type);
 
   /* Payload (46 - 1500 bytes) */
   ptr = packet + ETHER_HDR_LEN;
@@ -27,11 +27,11 @@ void packet_parser (u_char* arg,
     {
     case ETHERTYPE_IP:          /* 0x800 IPv4 */
       /* Obtiene los campos de la cabecera IP */
-      data.internet.ip_hdr = (struct ip*) ptr;
+      data.network.ip_hdr = (struct ip*) ptr;
 
       /* Obtiene los campos de la capa de transporte */
-      ptr = packet + data.internet.ip_hdr->ip_hl;
-      switch (data.internet.ip_hdr->ip_p)
+      ptr = packet + data.network.ip_hdr->ip_hl;
+      switch (data.network.ip_hdr->ip_p)
         {
         case IP_PROTO_ICMP:     /* 1 ICMP */
           data.transport.icmp_hdr = (struct icmphdr*) ptr;
@@ -44,12 +44,12 @@ void packet_parser (u_char* arg,
           break;
         default:                /* No implementado o desconocido */
           fprintf (stderr, "Protocolo no soportado: %u\n",
-                   data.internet.ip_hdr->ip_p);
+                   data.network.ip_hdr->ip_p);
         }
       break;
 
     case ETHERTYPE_ARP:         /* 0x806 ARP */
-      data.internet.arp_hdr = (struct arp*) ptr;
+      data.network.arp_hdr = (struct arp*) ptr;
       break;
     default:
       fprintf (stderr, "Ethertype no soportado: %d\n",
@@ -60,26 +60,26 @@ void packet_parser (u_char* arg,
   print_data (&data);
 }
 
-void print_data (struct pkt_data* data)
+void print_data (struct tcp_ip* data)
 {
   /* Cabecera Ethernet II */
   int i;
   printf ("\nMAC origen:\t");   /* MAC origen (6 bytes) */
   for (i = 0; i < 6;
        printf ("%02x%c",
-               data->network_access->ether_shost[i],
+               data->datalink->ether_shost[i],
                i < 5 ? ':' : '\n'),
          i++);
 
   printf ("MAC destino:\t");    /* MAC destino (6 bytes) */
   for (i = 0; i < 6;
        printf ("%02x%c",
-               data->network_access->ether_dhost[i],
+               data->datalink->ether_dhost[i],
                i < 5 ? ':' : '\n'),
          i++);
 
   printf ("Tipo: %04x\n",       /* Ethertype (2 bytes) */
-          ntohs (data->network_access->ether_type));
+          ntohs (data->datalink->ether_type));
 
   /* Cabecera IP */
   /* printf ("\tVersión: %u\tIHL: %u bytes\tTipo de servicio: %X\tLongitud: %u bytes\n", */

@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
       exit (EXIT_FAILURE);
     }
 
-  /* Se compila el BPF */
   filter = argv[5];
+  /* Se compila el BPF */
   if(pcap_compile(session, &bpf, filter, 0, net_ip) < 0)
     {
       fprintf (stderr, "Error al compilar el filtro\n");

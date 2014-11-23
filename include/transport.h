@@ -1,3 +1,8 @@
+/* protocol ID's' */
+#define IP_PROTO_ICMP  0x01     /* ICMP */
+#define IP_PROTO_TCP   0x06     /* TCP */
+#define IP_PROTO_UDP   0x11     /* UDP */
+
 /**
  * Estructura del encabezado ICMP
  * netinet/ip_icmp.h
