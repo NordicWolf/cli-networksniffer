@@ -27,7 +27,10 @@ struct tcp_ip
 };
 
 /* Procesa los paquetes recibidos */
-void packet_parser (u_char*, const struct pcap_pkthdr*, const u_char*);
+void packet_parser (u_char*,
+                    const struct pcap_pkthdr*, 
+                    const u_char*);
 
 /* Muestra los datos de los paquetes capturados */
-void print_data (struct tcp_ip*);
+void print_data (const struct pcap_pkthdr*,
+                 struct tcp_ip*);

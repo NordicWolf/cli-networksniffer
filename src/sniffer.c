@@ -6,6 +6,7 @@
 ***********************************************/
 
 #include "../include/sniffer.h"
+#include <time.h>
 
 /* Procesa los paquetes recibidos */
 void packet_parser (u_char* arg,
@@ -54,17 +55,30 @@ void packet_parser (u_char* arg,
     default:
       fprintf (stderr, "Ethertype no soportado: %d\n",
                ether_type);
-      break;
+      return;
     }
 
-  print_data (&data);
+  print_data (pkthdr, &data);
 }
 
-void print_data (struct tcp_ip* data)
+void print_data (const struct pcap_pkthdr* pkthdr, struct tcp_ip* data)
 {
+  static int index = 1;
+  /* Marca de tiempo */
+  char ts_str[21];
+  time_t ts = pkthdr->ts.tv_sec;
+  long int ts_ns = pkthdr->ts.tv_usec;
+  struct tm* ts_struct = localtime(&ts);
+  char *ts_format = "%d %b %Y\t%T";
+  strftime (ts_str, sizeof (ts_str), ts_format, ts_struct);
+  printf ("\n\tPaquete: %d\t%s.%ld\n", index, ts_str, ts_ns);
+  index++;
+
+  puts("\t----------------------------------------------------");
+  
   /* Cabecera Ethernet II */
   int i;
-  printf("\n\t[");                /* MAC origen (6 bytes) */
+  printf("\t[");                /* MAC origen (6 bytes) */
   for (i = 0; i < 6;
        printf ("%02x%c",
                data->datalink->ether_shost[i],
@@ -122,8 +136,9 @@ void print_data (struct tcp_ip* data)
             }
           break;
         case IP_PROTO_TCP:
-          printf ("\tPuerto origen: %u\tPuerto destino: %u\n",
-                  ntohs (data->transport.tcp_hdr->th_sport),
+          printf ("\tPuerto origen: %u",
+                  ntohs (data->transport.tcp_hdr->th_sport));
+          printf ("\tPuerto destino: %u\n",
                   ntohs (data->transport.tcp_hdr->th_dport));
           printf ("\tNum. secuencia: %u\tNum. Ack: %u\n",
                   ntohl (data->transport.tcp_hdr->th_seq),
@@ -142,8 +157,9 @@ void print_data (struct tcp_ip* data)
                   ntohs (data->transport.tcp_hdr->th_urp));
           break;
         case IP_PROTO_UDP:
-          printf ("\tPuerto origen: %u\tPuerto destino: %u\n",
-                  ntohs (data->transport.udp_hdr->source),
+          printf ("\tPuerto origen: %u",
+                  ntohs (data->transport.udp_hdr->source));
+          printf ("\tPuerto destino: %u\n",
                   ntohs (data->transport.udp_hdr->dest));
           printf ("\tLongitud: %u\tChecksum: %X\n",
                   ntohs (data->transport.udp_hdr->len),
@@ -192,6 +208,5 @@ void print_data (struct tcp_ip* data)
                    data->network.arp_hdr->__ar_tip[i],
                    i < 3 ? '.' : ' '), i++);
       putchar('\n');
-      break;
     }
 }
