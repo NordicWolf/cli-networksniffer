@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
   char errbuf [PCAP_ERRBUF_SIZE]; /* Búfer de mensaje de error */
   char* device;                   /* Nombre del dispositivo de red */
   char* filter;                   /* Apuntador a una cadena de filtro */
+  char* fname;                    /* Ruta y nombre del archivo pcap */
   pcap_t* session;                /* Apuntador a una sesión de captura */
   bpf_u_int32 net_mask;           /* Máscara de red */
   bpf_u_int32 net_ip;             /* Dirección de red */
@@ -23,36 +24,44 @@ int main(int argc, char *argv[])
 
   /* Obtiene Las opciones de la línea de comandos */
   int opciones;
-  while ((opciones = getopt (argc, argv, "i:c:")) != -1)
+  fname = NULL;
+  while ((opciones = getopt (argc, argv, "i:c:f:")) != -1)
     {
       switch (opciones)
         {
-        case 'i':               /* Establece el nombre del dispositivo */
+        case 'i':               /* Define el nombre del dispositivo */
           device = optarg;
           break;
-        case 'c':               /* Establece el límite de paquetes en la captura */
+        case 'c':               /* Establece el límite a capturar */
           counter = atoi (optarg);
           break;
-        default:
+        case 'f':
+          fname = optarg;       /* Define la ruta y el nombre de archivo */
           break;
         }
     }
-  /* Obtiene los atributos de la red (máscara de red, direccion de red)*/
-  if (pcap_lookupnet (device, &net_ip, &net_mask, errbuf) < 0)
+  if (fname != NULL)
+    /* Crea una sesión para lectura desde archivo */
+    session = pcap_open_offline (fname, errbuf);
+  else
     {
-      fprintf (stderr, "%s\n", errbuf);
-      exit (EXIT_FAILURE);
-    }
+      /* Obtiene los atributos de la red (máscara de red, direccion de red)*/
+      if (pcap_lookupnet (device, &net_ip, &net_mask, errbuf) < 0)
+        {
+          fprintf (stderr, "%s\n", errbuf);
+          exit (EXIT_FAILURE);
+        }
 
-  /* Inicia una sesión para la captura de paquetes */
-  session = pcap_open_live (device, BUFSIZ, 1, 100, errbuf);
+      /* Inicia una sesión para la captura de paquetes */
+      session = pcap_open_live (device, BUFSIZ, 1, 100, errbuf);
+    }
   if(session == NULL)
     {
       fprintf (stderr, "%s\n", errbuf);
       exit (EXIT_FAILURE);
     }
 
-  filter = argv[5];
+  filter = argv[argc-1];
   /* Se compila el BPF */
   if(pcap_compile(session, &bpf, filter, 0, net_ip) < 0)
     {

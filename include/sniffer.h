@@ -1,7 +1,7 @@
 #include <pcap/pcap.h>
 #include <unistd.h>
 #include "datalink.h"           /* Estructura Ethernet */
-#include "network.h"           /* Estructuras IP, ARP */
+#include "network.h"            /* Estructuras IP, ARP */
 #include "transport.h"          /* Estructuras ICMP, TCP, UDP */
 
 /**
