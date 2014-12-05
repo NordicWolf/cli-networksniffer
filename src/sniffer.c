@@ -63,7 +63,9 @@ void packet_parser (u_char* arg,
 
 void print_data (const struct pcap_pkthdr* pkthdr, struct tcp_ip* data)
 {
-  static int index = 1;
+  static int index;
+  const u_char* ptr = NULL;
+
   /* Marca de tiempo */
   char ts_str[21];
   time_t ts = pkthdr->ts.tv_sec;
@@ -71,8 +73,7 @@ void print_data (const struct pcap_pkthdr* pkthdr, struct tcp_ip* data)
   struct tm* ts_struct = localtime(&ts);
   char *ts_format = "%d %b %Y\t%T";
   strftime (ts_str, sizeof (ts_str), ts_format, ts_struct);
-  printf ("\n\tPaquete: %d\t%s.%ld\n", index, ts_str, ts_ns);
-  index++;
+  printf ("\n\tPaquete: %d\t%s.%ld\n", ++index, ts_str, ts_ns);
 
   puts("\t----------------------------------------------------");
   
@@ -119,20 +120,22 @@ void print_data (const struct pcap_pkthdr* pkthdr, struct tcp_ip* data)
       printf ("\tIP destino:\t%s\n",
               inet_ntoa (data->network.ip_hdr->ip_dst));
       puts("\t----------------------------------------------------");
-      /* Cabecera ICMP */
+      
       switch (data->network.ip_hdr->ip_p)
         {
-        case IP_PROTO_ICMP:
+        case IP_PROTO_ICMP:     /* Cabecera ICMP */
           printf("\tTipo: %u\tCódigo: %u\tChecksum: %X\n",
                  data->transport.icmp_hdr->type,
                  data->transport.icmp_hdr->code,
                  data->transport.icmp_hdr->checksum);
+          ptr = (const u_char*) (data->transport.icmp_hdr) + 4;
           if (data->transport.icmp_hdr->type == 0 ||
               data->transport.icmp_hdr->type == 8)
             {
               printf ("\tId: %u\tNum. secuencia: %u\n",
                       ntohs (data->transport.icmp_hdr->un.echo.id),
                       ntohs (data->transport.icmp_hdr->un.echo.sequence));
+              ptr += 4;
             }
           break;
         case IP_PROTO_TCP:
@@ -155,6 +158,7 @@ void print_data (const struct pcap_pkthdr* pkthdr, struct tcp_ip* data)
           printf ("\tChecksum: %X\tUrg. pointer: %u\n",
                   ntohs (data->transport.tcp_hdr->th_sum),
                   ntohs (data->transport.tcp_hdr->th_urp));
+          ptr = (const u_char*) (data->transport.tcp_hdr) + data->transport.tcp_hdr->th_off * 4;
           break;
         case IP_PROTO_UDP:
           printf ("\tPuerto origen: %u",
@@ -164,6 +168,7 @@ void print_data (const struct pcap_pkthdr* pkthdr, struct tcp_ip* data)
           printf ("\tLongitud: %u\tChecksum: %X\n",
                   ntohs (data->transport.udp_hdr->len),
                   ntohs (data->transport.udp_hdr->check));
+          ptr = (const u_char*) (data->transport.udp_hdr) + 8;
           break;
         default:
           printf ("Protocolo no implementado: %u\n",
@@ -207,6 +212,24 @@ void print_data (const struct pcap_pkthdr* pkthdr, struct tcp_ip* data)
            printf ("%u%c",
                    data->network.arp_hdr->__ar_tip[i],
                    i < 3 ? '.' : ' '), i++);
+      ptr = (const u_char*) (data->transport.udp_hdr) + 8;
       putchar('\n');
+
+      return;
     }
+
+  puts("\t----------------------------------------------------");
+
+  putchar ('\t');
+  const u_char* base = (const u_char*) (data->datalink);
+  while ( (ptr - base) < pkthdr->len )
+    {
+      printf ("%c", *ptr > 31 && *ptr < 127 ? *ptr : '.' );
+      if ( (ptr - base - 1) % 52 == 0 )
+          printf ("\n\t");
+
+      ptr++;
+    }
+
+  putchar('\n');
 }
