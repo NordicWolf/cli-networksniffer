@@ -1,19 +1,26 @@
 CC=gcc
 CFLAGS=-c -Wall
-LIBFLAGS=-lpcap
-OBJS=sniffer.o main.o
+PARTS=sniffer.o main.o
+
+# Directorios
+OBJ=obj
+SRC=src
+INC=include
+
+# Bibliotecas externas
+LIBS=pcap
 
 all: build
 
-build:  $(OBJS)
-	$(CC) lib/* -o bin/sniffer.bin $(LIBFLAGS)
+build: $(PARTS)
+	@echo "Enlazando"
+	@$(CC) $(OBJ)/*.o -o bin/sniffer $(patsubst %,-l%,$(LIBS))
+	@echo -e "\nListo. El programa se encuentra en el directorio bin/"
 
-main.o: src/main.c
-	$(CC) $(CFLAGS) $^ -o lib/$@
-
-sniffer.o: src/sniffer.c
-	$(CC) $(CFLAGS) $^ -o lib/$@
+%.o: $(SRC)/%.c
+	@echo "Compilando $(<)"
+	@if [ ! -d "$(OBJ)" ]; then mkdir $(OBJ); fi
+	@$(CC) $(CFLAGS) $< -o $(OBJ)/$@ -I $(INC)
 
 clean:
-	rm -vf bin/*
-	rm -vf lib/*.o
+	@rm -vf bin/* obj/*.o
